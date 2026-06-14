@@ -5,50 +5,49 @@ import { expressMiddleware } from "@as-integrations/express5";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import http from "http";
+import {
+  APP_GRAPHQL_ERROR_CODES,
+  APP_URLS,
+  HTTP_STATUS,
+} from "./helpers/constants.js";
+import authRouter from "./routers/authRouter.routes.js";
+import masterErrorHandler from "./middlewares/masterErrorHandler.js";
+import zodValidationErrHandler from "./middlewares/zodValidationErrHandler.js";
+import alreadyExistErrHandler from "./middlewares/alreadyExistErrorHandler.js";
+import credentialsMissingErrHandler from "./middlewares/credentialsMissingErrHandler.js";
+import unauthorizedErrorHandler from "./middlewares/UnAuthorizedErrHandler.js";
+import resourceNotFoundErrHandler from "./middlewares/resourceNotFoundErrHandler.js";
+import jsonParseErrHandler from "./middlewares/jsonParseErrHandler.js";
+import gqlSchema from "./graphql/gqlSchema.js";
+import resolvers from "./graphql/resolvers/resolvers.js";
+import { AppContext } from "./helpers/types.js";
+import { validateAccess } from "./helpers/auth.js";
 
 const app = express();
 const PORT = 3500;
 const httpServer = http.createServer(app);
 
-const typeDefs = `#graphql
-
-    type Blog{
-        name:  String
-        author: String
-        content: String
-    }
-
-    # Query type list all of the available queries that clients can execute
-    type Query{
-        blogs: [Blog] # blogs query returns array of zero or more blogs
-    }
-
-`;
-
-// Data
-const blogsData = [
-  {
-    name: "Oh captian",
-    author: "Salone",
-    content: "This is a sample content for 'Oh Captain!'",
-  },
-  {
-    name: "She Is",
-    author: "Priscilla Adams",
-    content: "This is a sample content for 'She Is'",
-  },
-];
-
-const resolvers = {
-  Query: {
-    blogs: () => blogsData,
-  },
-};
-
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+const server = new ApolloServer<AppContext>({
+  typeDefs: gqlSchema,
+  resolvers: resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
+  formatError(formattedError, error) {
+    switch (formattedError?.extensions?.code) {
+      case APP_GRAPHQL_ERROR_CODES.zodBadUserInput:
+        return {
+          message: formattedError.message,
+          errDetails: formattedError.extensions.errDetails,
+        };
+      case APP_GRAPHQL_ERROR_CODES.unAuthenticated:
+        return { message: formattedError.message };
+      case APP_GRAPHQL_ERROR_CODES.forbidden:
+        return { message: formattedError.message };
+
+      default:
+        return formattedError;
+    }
+  },
+  includeStacktraceInErrorResponses: true, // ! Change it to false when development is DONE And also return {message: Unknown Error happened}
 });
 
 await server.start();
@@ -56,15 +55,40 @@ await server.start();
 // Define Middleware's here
 app.use(cors());
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json(), jsonParseErrHandler);
 app.use(express.urlencoded({ extended: false }));
 
 // Define Auth API
-
+app.use(APP_URLS.auth.base, authRouter);
 // Define Graphql API
-app.use("/graphql", expressMiddleware(server));
+app.use(
+  "/graphql",
+  expressMiddleware<AppContext>(server, {
+    context: async ({ req }) => {
+      return validateAccess(
+        req.headers?.authorization || (req.headers?.Authorization as string),
+      );
+    },
+  }),
+);
 
 // Define Master-Error Handlers Here
+app.use(zodValidationErrHandler);
+app.use(alreadyExistErrHandler);
+app.use(unauthorizedErrorHandler);
+app.use(resourceNotFoundErrHandler);
+
+// CredentialsErr Handler - this will stop the app
+app.use(credentialsMissingErrHandler);
+// Master-Master-Error
+app.use(masterErrorHandler);
+
+// 404-handler
+app.use((req, res, _) => {
+  return res
+    .status(HTTP_STATUS.notFound)
+    .send(`Sorry, Requested resource "${req.method}:${req.path}" NOT FOUND!`);
+});
 
 // app.listen(PORT, (error) => {
 //   if (error) {

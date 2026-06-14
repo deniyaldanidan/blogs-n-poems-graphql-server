@@ -16,7 +16,8 @@
         "allowJs": false,
         "verbatimModuleSyntax": false
     },
-    "include": [
-        "src/**/*"
-    ]
+    // "include": [
+    // "src/**/*",
+    // "drizzle.config.ts"
+    // ]
 }
