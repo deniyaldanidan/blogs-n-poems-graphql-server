@@ -1,16 +1,18 @@
 import z from "zod";
 
+export const nameOfUserZodSchema = z
+  .string("name should be a string")
+  .trim()
+  .min(2, "name is too short")
+  .max(60, "name is too long")
+  .regex(
+    /^[a-zA-Z 0-9]{2,60}$/,
+    "Only alphanumeric and single space characters are allowed",
+  );
+
 const signUpZodSchema = z.object(
   {
-    name: z
-      .string("name should be a string")
-      .trim()
-      .min(2, "name is too short")
-      .max(60, "name is too long")
-      .regex(
-        /^[a-zA-Z 0-9]{2,60}$/,
-        "Only alphanumeric and single space characters are allowed",
-      ),
+    name: nameOfUserZodSchema,
     username: z
       .string("username should be a string")
       .trim()

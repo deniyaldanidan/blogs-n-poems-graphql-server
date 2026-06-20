@@ -1,5 +1,6 @@
 import { CookieOptions } from "express";
 import { flattenError } from "zod";
+import { AccessPayloadType, UserRoleType } from "./types.js";
 
 export function addDaysFromToday(days: number) {
   return new Date(new Date().getTime() + days * 24 * 60 * 60 * 1000);
@@ -25,3 +26,19 @@ export function zodErrFormatter(flatErr: ReturnType<typeof flattenError>) {
   }
   return errObj;
 }
+
+export function hasRoles(
+  userRoles: AccessPayloadType["role"],
+  acceptedRoles: UserRoleType[],
+): boolean {
+  return acceptedRoles.some((rl) => userRoles.includes(rl));
+}
+
+export function operationSuccessReturn(message: string) {
+  return { success: true, message };
+}
+/*
+export function operationFailedReturn(message:string){
+  return {}
+}
+*/

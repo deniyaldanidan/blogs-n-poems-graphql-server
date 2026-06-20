@@ -1,0 +1,1 @@
+ALTER TABLE `user_account` MODIFY COLUMN `role` json DEFAULT ('["1019"]');

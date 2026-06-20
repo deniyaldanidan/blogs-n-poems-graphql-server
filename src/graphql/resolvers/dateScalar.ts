@@ -12,6 +12,7 @@ const dateScalar = new GraphQLScalarType({
   },
   parseValue(value) {
     // Convert incoming Milliseconds into Date Object
+    console.log(value);
     if (typeof value === "number") {
       return new Date(value);
     }
@@ -19,9 +20,11 @@ const dateScalar = new GraphQLScalarType({
   },
   parseLiteral(ast) {
     // Convert incoming hard-coded AST string to integer then to Date Object
-    if (ast.kind === Kind.INT) {
+    // console.log(ast);
+    if (ast.kind === Kind.INT || ast.kind === Kind.STRING) {
       return new Date(parseInt(ast.value, 10));
     }
+    // if (ast.kind === Kind.S)
     return null;
   },
 });

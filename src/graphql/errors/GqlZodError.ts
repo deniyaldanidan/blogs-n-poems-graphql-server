@@ -10,11 +10,15 @@ export default class GqlZodError extends GraphQLError {
   constructor(
     message: string = "Invalid Input values",
     flattenedError: ReturnType<typeof flattenError>,
+    mutation: boolean = true,
   ) {
     super(message, {
       extensions: {
         code: APP_GRAPHQL_ERROR_CODES.zodBadUserInput,
-        http: { status: HTTP_STATUS.badRequest },
+        httpStatus: HTTP_STATUS.badRequest,
+        http: {
+          status: mutation ? HTTP_STATUS.badRequest : HTTP_STATUS.success,
+        },
         errDetails: zodErrFormatter(flattenedError),
       },
     });

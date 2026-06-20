@@ -9,15 +9,17 @@ import {
   boolean,
   primaryKey,
   unique,
+  json,
 } from "drizzle-orm/mysql-core";
 import { randomUUID } from "crypto";
 import {
   contentTypeEnum,
+  correctionStatusEnum,
   poetBloggerReqRoleEnum,
   poetBloggerReqStatusEnum,
-  userRolesEnum,
   userRolesObj,
 } from "../../helpers/constants.js";
+import { UserRoleType } from "../../helpers/types.js";
 
 const STD_UUIDV4_LEN = 38;
 
@@ -31,7 +33,8 @@ export const users = mysqlTable("user_account", {
   password: varchar("password", { length: 255 }).notNull(),
   joinedAt: date("joined_at").$defaultFn(() => new Date()),
   about: varchar("about", { length: 1000 }),
-  role: mysqlEnum("role", userRolesEnum).default(userRolesObj.guest),
+  // role: mysqlEnum("role", userRolesEnum).default(userRolesObj.guest),
+  role: json().$type<UserRoleType[]>().default([userRolesObj.guest]),
 });
 
 export const sessions = mysqlTable("user_session", {
@@ -141,8 +144,10 @@ export const poetBloggerRequests = mysqlTable("poet_blogger_request", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   requestDate: datetime("request_date").$defaultFn(() => new Date()),
-  status: mysqlEnum("status", poetBloggerReqStatusEnum),
-  role: mysqlEnum("role", poetBloggerReqRoleEnum),
+  status: mysqlEnum("status", poetBloggerReqStatusEnum).default(
+    poetBloggerReqStatusEnum[0],
+  ),
+  role: mysqlEnum("role", poetBloggerReqRoleEnum).notNull(),
 });
 
 export const poemBlogCorrectionRequests = mysqlTable(
@@ -156,6 +161,10 @@ export const poemBlogCorrectionRequests = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     deadline: datetime("deadline").notNull(),
+    updatedAt: datetime("updated_at").$onUpdateFn(() => new Date()),
+    status: mysqlEnum("status", correctionStatusEnum).default(
+      correctionStatusEnum[0],
+    ),
   },
   (table) => [
     unique("content_type_id_unique_index").on(

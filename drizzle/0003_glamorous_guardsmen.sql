@@ -1,0 +1,2 @@
+ALTER TABLE `poem_blog_correction_request` ADD `updated_at` datetime;--> statement-breakpoint
+ALTER TABLE `poem_blog_correction_request` ADD `status` enum('requested','edited','corrected','declined') DEFAULT 'requested';

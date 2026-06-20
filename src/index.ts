@@ -22,6 +22,7 @@ import gqlSchema from "./graphql/gqlSchema.js";
 import resolvers from "./graphql/resolvers/resolvers.js";
 import { AppContext } from "./helpers/types.js";
 import { validateAccess } from "./helpers/auth.js";
+import { ApolloServerErrorCode } from "@apollo/server/errors";
 
 const app = express();
 const PORT = 3500;
@@ -32,22 +33,30 @@ const server = new ApolloServer<AppContext>({
   resolvers: resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   formatError(formattedError, error) {
-    switch (formattedError?.extensions?.code) {
-      case APP_GRAPHQL_ERROR_CODES.zodBadUserInput:
-        return {
-          message: formattedError.message,
-          errDetails: formattedError.extensions.errDetails,
-        };
-      case APP_GRAPHQL_ERROR_CODES.unAuthenticated:
-        return { message: formattedError.message };
-      case APP_GRAPHQL_ERROR_CODES.forbidden:
-        return { message: formattedError.message };
-
-      default:
-        return formattedError;
-    }
+    // switch (formattedError?.extensions?.code) {
+    // case ApolloServerErrorCode.GRAPHQL_PARSE_FAILED:
+    // return { message: `Graphql ${formattedError.message}`, ...formattedError };
+    // case APP_GRAPHQL_ERROR_CODES.zodBadUserInput:
+    // return {
+    // message: formattedError.message,
+    // errDetails: formattedError.extensions.errDetails,
+    // };
+    // return formattedError;
+    // case APP_GRAPHQL_ERROR_CODES.unAuthenticated:
+    //   return { message: formattedError.message, ...formattedError };
+    // case APP_GRAPHQL_ERROR_CODES.forbidden:
+    //   return { message: formattedError.message, ...formattedError };
+    // case APP_GRAPHQL_ERROR_CODES.badRequest:
+    //   return { message: formattedError.message, ...formattedError };
+    // case APP_GRAPHQL_ERROR_CODES.notFound:
+    //   return { message: formattedError.message, ...formattedError };
+    // default:
+    // return formattedError;
+    // }
+    // console.log(error);
+    return formattedError;
   },
-  includeStacktraceInErrorResponses: true, // ! Change it to false when development is DONE And also return {message: Unknown Error happened}
+  includeStacktraceInErrorResponses: false, // ! Change it to false when development is DONE And also return {message: Unknown Error happened}
 });
 
 await server.start();

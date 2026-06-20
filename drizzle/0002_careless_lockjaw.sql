@@ -1,0 +1,2 @@
+ALTER TABLE `poet_blogger_request` MODIFY COLUMN `status` enum('requested','accepted','declined') DEFAULT 'requested';--> statement-breakpoint
+ALTER TABLE `poet_blogger_request` MODIFY COLUMN `role` enum('blogger','poet') NOT NULL;

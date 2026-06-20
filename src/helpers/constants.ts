@@ -1,4 +1,11 @@
-// import { ApolloServerErrorCode } from "@apollo/server/errors";
+import { ApolloServerErrorCode } from "@apollo/server/errors";
+
+export const correctionStatusEnum = [
+  "requested",
+  "edited",
+  "corrected",
+  "declined",
+] as const;
 
 export const userRolesEnum = ["1019", "2374", "9802", "9943"] as const;
 
@@ -52,4 +59,6 @@ export const APP_GRAPHQL_ERROR_CODES = {
   zodBadUserInput: "APP_ZOD_BAD_USER_INPUT",
   unAuthenticated: "APP_NOT_AUTHENTICATED",
   forbidden: "APP_FORBIDDEN_ACTION",
+  badRequest: ApolloServerErrorCode.BAD_REQUEST,
+  notFound: "RESOURCE_NOT_FOUND",
 } as const;
