@@ -1,6 +1,7 @@
 // import { BaseContext } from "@apollo/server";
 import {
   contentTypeEnum,
+  correctionStatusInputEnum,
   poetBloggerReqRoleEnum,
   poetBloggerReqStatusEnum,
   userRolesEnum,
@@ -39,3 +40,6 @@ export type AdminPoetBloggerReqStatusEnumType =
   (typeof adminPoetBloggerReqStatusEnum)[number];
 
 export type ContentEnumType = (typeof contentTypeEnum)[number];
+
+export type CorrectionStatusInputEnumType =
+  (typeof correctionStatusInputEnum)[number];

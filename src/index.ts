@@ -23,6 +23,7 @@ import resolvers from "./graphql/resolvers/resolvers.js";
 import { AppContext } from "./helpers/types.js";
 import { validateAccess } from "./helpers/auth.js";
 import { ApolloServerErrorCode } from "@apollo/server/errors";
+import sampleController from "./controllers/sampleController.controller.js";
 
 const app = express();
 const PORT = 3500;
@@ -69,6 +70,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Define Auth API
 app.use(APP_URLS.auth.base, authRouter);
+app.get("/sample", sampleController); // ! Will delete this After the TRIAL
 // Define Graphql API
 app.use(
   "/graphql",

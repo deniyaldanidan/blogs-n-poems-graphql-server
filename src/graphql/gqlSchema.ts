@@ -31,6 +31,10 @@ const gqlSchema = `#graphql
         declined
     }
 
+    enum CorrectionStatusInputEnum{
+        corrected
+        declined
+    }
 
     type Author {
         name: String!
@@ -48,8 +52,9 @@ const gqlSchema = `#graphql
         createdAt: Date!
         updatedAt: Date!
         author: Author!
-        # Likes-Count
-        # Comments - Comment
+        # [NOW-0] Lookout Where "Blog" is used and Try to fetch likes & comments in there
+        # likes-Count
+        # comments - [Comment!]
     }
 
     type Poem{
@@ -59,6 +64,9 @@ const gqlSchema = `#graphql
         createdAt: Date!
         updatedAt: Date!
         author: Author!
+        # [NOW-1] Lookout Where "Blog" is used and Try to fetch likes & comments in there
+        # Likes-Count
+        # Comments - [Comment]
     }
 
     type MyInfo{
@@ -104,7 +112,7 @@ const gqlSchema = `#graphql
         correctionContent: CorrectionContent
     }
 
-    # [FINAL] WATCH EACH ENDPOINTS FLOW
+    # [FINAL] WATCH HOW EACH ENDPOINTS FLOW
 
     # Query types
     type Query {
@@ -120,19 +128,20 @@ const gqlSchema = `#graphql
         # My-Blog
         # My-Poems
         # My-Poem
+        # My-Liked-Blogs
+        # My-Liked-Poems
+        # My-Blog-Comments
+        # My-Poem-Comments
 
         # Poet/Blogger Queries
-        # View my correction queries (NOW-0)
-        viewMyCorrectionRequests(type:ContentType): [Correction!] # Haven't TESTED YET!
-        # View my correction Query (NOW-1)
-        viewMyCorrectionRequest(id:Int!): Correction # Haven't TESTED YET!
+        viewMyCorrectionRequests(type:ContentType): [Correction!]
+        viewMyCorrectionRequest(id:Int!): Correction
 
         # Admin Queries
         getPoetBloggerRequests(status:PoetBloggerReqStatus, role:PoetBloggerRole): [PoetBloggerRequest!]
         getPoetBloggerRequest(id:Int!):PoetBloggerRequest
-        # GET CORRECTION REQUESTS (NOW-2)
-        getCorrectionRequests(type:ContentType): [Correction!] # NOT IMPLEMENTED YET!
-        # GET CORRECTION REQUEST (NOW-3)
+        getCorrectionRequests(type:ContentType): [Correction!] 
+        getCorrectionRequest(id: Int!): Correction 
     }
 
     # Input types
@@ -147,6 +156,17 @@ const gqlSchema = `#graphql
         content: String!
     }
 
+    input BlogEditInput {
+        title: String
+        description: String
+        content: String
+    }
+
+    input PoemEditInput {
+        title: String
+        content: String
+    }
+
     input CorrectionInput{
         correction: String!
         contentId: Int!
@@ -154,15 +174,21 @@ const gqlSchema = `#graphql
         deadline: Date!
     }
 
+    input CommentInput{
+        id: Int!
+        comment: String!
+    }
+
 
     # Mutation types
     type Mutation{
         # Authed-User
         editUserInfo(name:String, about:String):OperationSuccessReturn!
-        # LIKE A BLOG (NOW-6)
-        # COMMENT ON A BLOG (NOW-7)
-        # LIKE A POEM (NOW-8)
-        # COMMENT ON A POEM (NOW-9)
+        likeBlog(blogid:Int!):OperationSuccessReturn!
+        addBlogComment(data:CommentInput!):OperationSuccessReturn!
+        likePoem(poemId:Int!):OperationSuccessReturn!
+        addPoemComment(data:CommentInput!):OperationSuccessReturn!
+        
         
         # Guest
         applyToBeBlogger(sample:String!): OperationSuccessReturn!
@@ -170,16 +196,16 @@ const gqlSchema = `#graphql
         
         # Blogger-Only
         addBlog(data:BlogInput!):ID!
-        editBlog(data:BlogInput):ID! # (NOW-4)
+        editBlog(id: Int!, data:BlogEditInput!):ID! 
         
         # Poet-Only
         addPoem(data:PoemInput!):ID!
-        editPoem(data:PoemInput):ID! # (NOW-5)
+        editPoem(id: Int!, data:PoemEditInput!):ID! 
 
         # Admin Mutations
         acceptDeclinePoetBloggerRequest(id:Int!, status:AdminPoetBloggerReqStatus!):OperationSuccessReturn!
         requestCorrectionForPoemOrBlog(data:CorrectionInput!):ID!
-        # CHANGE-CORRECTION-REQUEST-STATUS # (NOW-5.5)
+        changeCorrectionReqStatus(id: Int!, status: CorrectionStatusInputEnum! ):OperationSuccessReturn!
     }
 `;
 

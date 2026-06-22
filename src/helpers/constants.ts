@@ -7,6 +7,8 @@ export const correctionStatusEnum = [
   "declined",
 ] as const;
 
+export const correctionStatusInputEnum = ["corrected", "declined"] as const;
+
 export const userRolesEnum = ["1019", "2374", "9802", "9943"] as const;
 
 export const userRolesObj = {

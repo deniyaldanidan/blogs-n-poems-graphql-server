@@ -1,16 +1,16 @@
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import {
+  poemBlogCorrectionRequests,
+  users,
+} from "../../../../db/schema/schema.js";
 import { userRolesObj } from "../../../../helpers/constants.js";
 import { hasRoles } from "../../../../helpers/helpers.js";
 import { AppContext, ContentEnumType } from "../../../../helpers/types.js";
 import GqlForbiddenError from "../../../errors/GqlForbiddenError.js";
 import GqlUnAuthedError from "../../../errors/GqlUnAuthedError.js";
-import {
-  poemBlogCorrectionRequests,
-  users,
-} from "../../../../db/schema/schema.js";
 import db from "../../../../db/db.js";
 
-export default async function viewMyCorrectionRequests(
+export default async function getCorrectionRequests(
   _: any,
   args: { type?: ContentEnumType },
   ctx: AppContext,
@@ -19,16 +19,11 @@ export default async function viewMyCorrectionRequests(
   if (!ctx.auth) {
     throw new GqlUnAuthedError("User not authenticated", false);
   }
-  // Check if he has any "blogger" | "poet" roles
-  if (!hasRoles(ctx.role, [userRolesObj.blogger, userRolesObj.poet])) {
-    throw new GqlForbiddenError("User not a Blogger or Poet", false);
+  // Check if ADMIN?
+  if (!hasRoles(ctx.role, [userRolesObj.admin])) {
+    throw new GqlForbiddenError("Only Admin allowed", false);
   }
-  const conditions = [];
-  conditions.push(eq(poemBlogCorrectionRequests.userId, ctx.userId));
-  // if type is provided add it to the conditions array
-  if (args.type?.length) {
-    conditions.push(eq(poemBlogCorrectionRequests.contentType, args.type));
-  }
+
   // fetch the Corrections
   const corrections = await db
     .select({
@@ -47,7 +42,11 @@ export default async function viewMyCorrectionRequests(
       status: poemBlogCorrectionRequests.status,
     })
     .from(poemBlogCorrectionRequests)
-    .where(and(...conditions))
+    .where(
+      args.type?.length
+        ? eq(poemBlogCorrectionRequests.contentType, args.type)
+        : undefined,
+    )
     .leftJoin(users, eq(users.id, poemBlogCorrectionRequests.userId));
   return corrections;
 }
