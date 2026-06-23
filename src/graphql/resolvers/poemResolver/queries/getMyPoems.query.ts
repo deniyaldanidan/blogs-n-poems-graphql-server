@@ -1,4 +1,4 @@
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import db from "../../../../db/db.js";
 import {
   poemComments,
@@ -6,19 +6,18 @@ import {
   poems,
   users,
 } from "../../../../db/schema/schema.js";
+import { userRolesObj } from "../../../../helpers/constants.js";
+import { hasRoles } from "../../../../helpers/helpers.js";
+import { AppContext } from "../../../../helpers/types.js";
+import GqlForbiddenError from "../../../errors/GqlForbiddenError.js";
+import GqlUnAuthedError from "../../../errors/GqlUnAuthedError.js";
 
-export default async function getPoems(_: any, args?: { by?: string }) {
-  const conditions = [];
-  conditions.push(eq(poems.archive, false));
-  if (args?.by?.length) {
-    const foundAuthor = await db
-      .select()
-      .from(users)
-      .where(or(eq(users.username, args.by), eq(users.id, args.by)));
-    if (!foundAuthor.length) {
-      return [];
-    }
-    conditions.push(eq(poems.userId, foundAuthor[0].id));
+export default async function getMyPoems(_: any, args: {}, ctx: AppContext) {
+  if (!ctx.auth) {
+    throw new GqlUnAuthedError("User not Authenticated", false);
+  }
+  if (!hasRoles(ctx.role, [userRolesObj.poet])) {
+    throw new GqlForbiddenError("User not a Poet", false);
   }
   const foundPoems = await db
     .select({
@@ -34,9 +33,10 @@ export default async function getPoems(_: any, args?: { by?: string }) {
         about: users.about,
       },
       likes: db.$count(poemLikes, eq(poemLikes.poemId, poems.id)),
+      archive: poems.archive,
     })
     .from(poems)
-    .where(conditions.length ? conditions[0] : undefined)
+    .where(eq(poems.userId, ctx.userId))
     .leftJoin(users, eq(users.id, poems.userId));
 
   const ids = foundPoems.map((dt) => dt.id);

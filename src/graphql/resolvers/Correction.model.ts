@@ -7,7 +7,13 @@ const Correction = {
   async correctionContent(parent: {
     contentId: number;
     contentType: ContentEnumType;
+    correctionContent: any;
   }) {
+    if (parent.correctionContent !== undefined) {
+      console.log(parent.correctionContent);
+      return parent.correctionContent;
+    }
+
     if (parent.contentType === "blog") {
       const data = await db
         .select({

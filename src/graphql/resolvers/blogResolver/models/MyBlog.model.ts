@@ -1,4 +1,4 @@
-const Poem = {
+const MyBlog = {
   async author(parent: any) {
     return parent.author;
   },
@@ -7,4 +7,4 @@ const Poem = {
   },
 };
 
-export default Poem;
+export default MyBlog;

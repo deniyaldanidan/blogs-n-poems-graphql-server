@@ -1,4 +1,4 @@
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import db from "../../../../db/db.js";
 import {
   poemComments,
@@ -6,27 +6,22 @@ import {
   poems,
   users,
 } from "../../../../db/schema/schema.js";
+import { AppContext } from "../../../../helpers/types.js";
+import GqlUnAuthedError from "../../../errors/GqlUnAuthedError.js";
 
-export default async function getPoems(_: any, args?: { by?: string }) {
-  const conditions = [];
-  conditions.push(eq(poems.archive, false));
-  if (args?.by?.length) {
-    const foundAuthor = await db
-      .select()
-      .from(users)
-      .where(or(eq(users.username, args.by), eq(users.id, args.by)));
-    if (!foundAuthor.length) {
-      return [];
-    }
-    conditions.push(eq(poems.userId, foundAuthor[0].id));
+export default async function getMyLikedPoems(_: any, __: {}, ctx: AppContext) {
+  if (!ctx.auth) {
+    throw new GqlUnAuthedError("User not authenticated", false);
   }
-  const foundPoems = await db
+
+  const likedPoems = await db
     .select({
       id: poems.id,
       title: poems.title,
       content: poems.content,
       createdAt: poems.createdAt,
       updatedAt: poems.updatedAt,
+      userId: poems.userId,
       author: {
         name: users.name,
         username: users.username,
@@ -35,11 +30,13 @@ export default async function getPoems(_: any, args?: { by?: string }) {
       },
       likes: db.$count(poemLikes, eq(poemLikes.poemId, poems.id)),
     })
-    .from(poems)
-    .where(conditions.length ? conditions[0] : undefined)
+    .from(poemLikes)
+    .where(eq(poemLikes.userId, ctx.userId))
+    .leftJoin(poems, eq(poems.id, poemLikes.poemId))
     .leftJoin(users, eq(users.id, poems.userId));
 
-  const ids = foundPoems.map((dt) => dt.id);
+  const parsedIds = likedPoems.map((dt) => dt.id);
+  const ids = parsedIds.filter((id) => id !== null);
   // console.log(ids);
   let fetchedComments: any[];
   if (ids.length) {
@@ -64,7 +61,7 @@ export default async function getPoems(_: any, args?: { by?: string }) {
     fetchedComments = [];
   }
 
-  const transformedData = foundPoems.map((dt) => {
+  const transformedData = likedPoems.map((dt) => {
     const currComments = fetchedComments.filter((cm) => cm.poemId === dt.id);
     return { ...dt, comments: currComments.length ? currComments : [] };
   });

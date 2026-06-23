@@ -1,4 +1,4 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import db from "../../../../db/db.js";
 import {
   blogComments,
@@ -7,27 +7,14 @@ import {
   users,
 } from "../../../../db/schema/schema.js";
 import { AppContext } from "../../../../helpers/types.js";
+import GqlUnAuthedError from "../../../errors/GqlUnAuthedError.js";
 
-export default async function getBlogs(
-  _: any,
-  args: { by: string | undefined },
-  ___: AppContext,
-) {
-  const conditions = [];
-  conditions.push(eq(blogs.archive, false));
-  if (args?.by?.length) {
-    const foundAuthor = await db
-      .select()
-      .from(users)
-      .where(or(eq(users.id, args.by), eq(users.username, args.by)));
-    if (!foundAuthor.length) {
-      // throw new GqlNotFoundError("Requested user not found");
-      return [];
-    }
-    const foundAuthorId = foundAuthor[0].id;
-    conditions.push(eq(blogs.userId, foundAuthorId));
+export default async function getMyLikedBlogs(_: any, __: {}, ctx: AppContext) {
+  if (!ctx.auth) {
+    throw new GqlUnAuthedError("User not authenticated", false);
   }
-  const blogsData = await db
+
+  const likedBlogs = await db
     .select({
       id: blogs.id,
       title: blogs.title,
@@ -44,11 +31,13 @@ export default async function getBlogs(
       },
       likes: db.$count(blogLikes, eq(blogLikes.blogId, blogs.id)),
     })
-    .from(blogs)
-    .where(conditions.length ? and(...conditions) : undefined)
+    .from(blogLikes)
+    .where(eq(blogLikes.userId, ctx.userId))
+    .leftJoin(blogs, eq(blogs.id, blogLikes.blogId))
     .leftJoin(users, eq(users.id, blogs.userId));
 
-  const ids = blogsData.map((dt) => dt.id);
+  const parsedIds = likedBlogs.map((dt) => dt.id);
+  const ids = parsedIds.filter((id) => id !== null);
   // console.log(ids);
   let fetchedComments: any[];
   if (ids.length) {
@@ -73,7 +62,7 @@ export default async function getBlogs(
     fetchedComments = [];
   }
 
-  const transformedData = blogsData.map((dt) => {
+  const transformedData = likedBlogs.map((dt) => {
     const currComments = fetchedComments.filter((cm) => cm.blogId === dt.id);
     return { ...dt, comments: currComments.length ? currComments : [] };
   });

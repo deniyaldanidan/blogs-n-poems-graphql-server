@@ -43,6 +43,24 @@ const gqlSchema = `#graphql
         about: String
     }
 
+    type BlogComment {
+        id: Int!
+        blogId: Int!
+        commentedBy: Author!
+        commentContent: String!
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
+    type PoemComment {
+        id: Int!
+        poemId: Int!
+        commentedBy: Author!
+        commentContent: String!
+        createdAt: Date!
+        updatedAt: Date!
+    }
+
     # Data types
     type Blog {
         id: ID!
@@ -52,9 +70,8 @@ const gqlSchema = `#graphql
         createdAt: Date!
         updatedAt: Date!
         author: Author!
-        # [NOW-0] Lookout Where "Blog" is used and Try to fetch likes & comments in there
-        # likes-Count
-        # comments - [Comment!]
+        likes: Int!
+        comments: [BlogComment!]
     }
 
     type Poem{
@@ -64,9 +81,51 @@ const gqlSchema = `#graphql
         createdAt: Date!
         updatedAt: Date!
         author: Author!
-        # [NOW-1] Lookout Where "Blog" is used and Try to fetch likes & comments in there
-        # Likes-Count
-        # Comments - [Comment]
+        likes: Int!
+        comments: [PoemComment!]
+    }
+
+    type MyBlog {
+        id: ID!
+        title: String!
+        description: String!
+        content: String!
+        createdAt: Date!
+        updatedAt: Date!
+        author: Author!
+        likes: Int!
+        comments: [BlogComment!]
+        archive: Boolean!
+    }
+
+    type MyPoem{
+        id: ID!
+        title: String!
+        content: String!
+        createdAt: Date!
+        updatedAt: Date!
+        author: Author!
+        likes: Int!
+        comments: [PoemComment!]
+        archive: Boolean!
+    }
+
+    type MyBlogComment{
+      id: Int!
+      blogId: Int!
+      commentContent: String!
+      createdAt: Date!
+      updatedAt: Date!
+      blog: Blog
+    }
+
+    type MyPoemComment{
+      id: Int!
+      poemId: Int!
+      commentContent: String!
+      createdAt: Date!
+      updatedAt: Date!
+      poem: Poem
     }
 
     type MyInfo{
@@ -112,8 +171,6 @@ const gqlSchema = `#graphql
         correctionContent: CorrectionContent
     }
 
-    # [FINAL] WATCH HOW EACH ENDPOINTS FLOW
-
     # Query types
     type Query {
         # Guest Queries
@@ -124,14 +181,14 @@ const gqlSchema = `#graphql
         viewUserInfo: MyInfo 
         getPoems(by: String): [Poem!]
         getPoem(id: Int!): Poem
-        # My-Blogs
-        # My-Blog
-        # My-Poems
-        # My-Poem
-        # My-Liked-Blogs
-        # My-Liked-Poems
-        # My-Blog-Comments
-        # My-Poem-Comments
+        getMyBlogs: [MyBlog!]
+        getMyBlog(id: Int!): MyBlog
+        getMyPoems: [MyPoem!]
+        getMyPoem(id: Int!): MyPoem
+        getMyLikedBlogs: [Blog!]
+        getMyLikedPoems: [Poem!]
+        getMyBlogComments: [MyBlogComment!]
+        getMyPoemComments: [MyPoemComment!]
 
         # Poet/Blogger Queries
         viewMyCorrectionRequests(type:ContentType): [Correction!]

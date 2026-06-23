@@ -1,5 +1,4 @@
-import z from "zod";
-import GqlOperationFailedError from "../../../errors/GqlOperationFailedError.js";
+import { and, eq } from "drizzle-orm";
 import db from "../../../../db/db.js";
 import {
   poemComments,
@@ -7,15 +6,23 @@ import {
   poems,
   users,
 } from "../../../../db/schema/schema.js";
-import { and, eq } from "drizzle-orm";
-// import GqlNotFoundError from "../../../errors/GqlNotFoundError.js";
+import { userRolesObj } from "../../../../helpers/constants.js";
+import { hasRoles } from "../../../../helpers/helpers.js";
+import { AppContext } from "../../../../helpers/types.js";
+import GqlForbiddenError from "../../../errors/GqlForbiddenError.js";
+import GqlUnAuthedError from "../../../errors/GqlUnAuthedError.js";
 
-export default async function getPoem(_: any, args: { id: number }) {
-  const parseIdRes = z.int().safeParse(args.id);
-  if (!parseIdRes.success) {
-    throw new GqlOperationFailedError("Invalid Id");
+export default async function getMyPoem(
+  _: any,
+  args: { id: number },
+  ctx: AppContext,
+) {
+  if (!ctx.auth) {
+    throw new GqlUnAuthedError("User not authenticated", false);
   }
-  const parsedId = parseIdRes.data;
+  if (!hasRoles(ctx.role, [userRolesObj.poet])) {
+    throw new GqlForbiddenError("User not a Poet", false);
+  }
   const foundPoem = await db
     .select({
       id: poems.id,
@@ -30,10 +37,12 @@ export default async function getPoem(_: any, args: { id: number }) {
         about: users.about,
       },
       likes: db.$count(poemLikes, eq(poemLikes.poemId, poems.id)),
+      archive: poems.archive,
     })
     .from(poems)
-    .where(and(eq(poems.id, parsedId), eq(poems.archive, false)))
+    .where(and(eq(poems.id, args.id), eq(poems.userId, ctx.userId)))
     .leftJoin(users, eq(users.id, poems.userId));
+
   const foundComments = await db
     .select({
       id: poemComments.id,
