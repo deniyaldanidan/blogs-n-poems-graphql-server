@@ -40,7 +40,7 @@ export default async function signUpController(req: Request, res: Response) {
     .$returningId();
 
   const createdUserId = createdUser[0];
-  const createdUserRole = userRolesObj.guest; // Newly created user will always be GUEST
+  const createdUserRole = [userRolesObj.guest]; // Newly created user will always be GUEST
 
   // Create the tokens
   const accessToken = signAccess({
