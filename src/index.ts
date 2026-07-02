@@ -33,28 +33,35 @@ const server = new ApolloServer<AppContext>({
   resolvers: resolvers,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
   formatError(formattedError, error) {
-    // switch (formattedError?.extensions?.code) {
-    // case ApolloServerErrorCode.GRAPHQL_PARSE_FAILED:
-    // return { message: `Graphql ${formattedError.message}`, ...formattedError };
-    // case APP_GRAPHQL_ERROR_CODES.zodBadUserInput:
-    // return {
-    // message: formattedError.message,
-    // errDetails: formattedError.extensions.errDetails,
-    // };
-    // return formattedError;
-    // case APP_GRAPHQL_ERROR_CODES.unAuthenticated:
-    //   return { message: formattedError.message, ...formattedError };
-    // case APP_GRAPHQL_ERROR_CODES.forbidden:
-    //   return { message: formattedError.message, ...formattedError };
-    // case APP_GRAPHQL_ERROR_CODES.badRequest:
-    //   return { message: formattedError.message, ...formattedError };
-    // case APP_GRAPHQL_ERROR_CODES.notFound:
-    //   return { message: formattedError.message, ...formattedError };
-    // default:
-    // return formattedError;
-    // }
+    switch (formattedError?.extensions?.code) {
+      case ApolloServerErrorCode.GRAPHQL_PARSE_FAILED:
+        return {
+          ...formattedError,
+          message: `Graphql: ${formattedError.message}`,
+        };
+      case APP_GRAPHQL_ERROR_CODES.zodBadUserInput:
+        return {
+          ...formattedError,
+          message: formattedError.message,
+          errDetails: formattedError.extensions.errDetails,
+        };
+      // return formattedError;
+      case APP_GRAPHQL_ERROR_CODES.unAuthenticated:
+        return { ...formattedError, message: formattedError.message };
+      case APP_GRAPHQL_ERROR_CODES.forbidden:
+        return { ...formattedError, message: formattedError.message };
+      case APP_GRAPHQL_ERROR_CODES.badRequest:
+        return { ...formattedError, message: formattedError.message };
+      case APP_GRAPHQL_ERROR_CODES.notFound:
+        return { ...formattedError, message: formattedError.message };
+      default:
+        return {
+          ...formattedError,
+          message: "Unknown Internal Error happened",
+        };
+    }
     // console.log(error);
-    return formattedError;
+    // return formattedError;
   },
   includeStacktraceInErrorResponses: false, // ! Change it to false when development is DONE And also return {message: Unknown Error happened}
 });
